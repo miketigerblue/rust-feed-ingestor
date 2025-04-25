@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Rust OSINT Feed Ingestor – tailored `.gitignore`
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 1) Rust build artefacts
+/target/                     # Compiled binaries and intermediate files
+**/*.rs.bk                   # Backups (if any)
+
+# 2) Cargo’s lock file (optional to commit)
+/Cargo.lock                  # Uncomment if you prefer not to lock deps at CI
+
+# 3) Configuration & secrets
+Config.toml                  # Local config overrides
+.env                         # Environment-variable file
+.env.*                       # Any other env files
+
+# 4) SQLx migrations state (if using sqlx-cli)
+/migrations/*.lock           # Migration lock files (created by sqlx-cli)
+# You want to commit the `.sql` files themselves, but not the lock
+
+# 5) Docker artefacts
+**/*.pid                     # PID files
+docker-compose.override.yml  # Local overrides for compose
+.docker/                     # Local Docker state, if you use a helper directory
+
+# 6) Editor & IDE specific
+.vscode/                     # VS Code settings
+.idea/                       # IntelliJ/CLion/WebStorm
+*.sublime-project            # Sublime Text projects
+*.sublime-workspace          # Sublime Text workspaces
+*_flymake.el                 # Emacs flymake backups
+*~                           # Backup files common in many editors
+*.swp                        # Vim swap files
+*.swo                        # Vim swap files
+
+# 7) OS-specific files
+.DS_Store                    # macOS Finder metadata
+Thumbs.db                    # Windows thumbnail cache
+
+# 8) Logs & temporary files
+*.log                        # Log files
+*.tmp                        # Temporary files
+
+# 9) Generated documentation (if you publish docs separately)
+/doc/                        # `cargo doc` output, if you store it here
+
+# 10) Other tooling
+/.history/                   # Editor history plugin
+/.cache/                     # Local cache directory (e.g. for some tools)

@@ -1,5 +1,12 @@
 version: '3.8'
 
+networks:
+  osint_net:
+
+volumes:
+  db_data:
+  grafana_data:
+
 services:
   db:
     image: postgres:13
@@ -12,6 +19,21 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - osint_net
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - osint_net
 
   rust_ingestor:
     build: .
@@ -21,11 +43,13 @@ services:
       - db
     environment:
       APP__DATABASE_URL: "postgres://user:pass@db:5432/osint?sslmode=disable"
-      APP__FEED_URLS: "https://hnrss.org/frontpage,https://example.com/security.rss"
+      APP__FEED_URLS: "https://feeds.feedburner.com/TheHackersNews,https://threatpost.com/feed/"
       APP__INGEST_INTERVAL: "1h"
       APP__SERVER_BIND: "0.0.0.0:9100"
     ports:
       - "9100:9100"
+    networks:
+      - osint_net
 
   prometheus:
     image: prom/prometheus:latest
@@ -38,16 +62,21 @@ services:
       - "9090:9090"
     depends_on:
       - rust_ingestor
+    networks:
+      - osint_net
 
-volumes:
-  db_data:
-
-# prometheus.yml
-# Place this file alongside docker-compose.yml
-# Scrapes the Rust ingestor's metrics endpoint every 15s
-# -----------------------------------------
-scrape_configs:
-  - job_name: 'rust_ingestor'
-    scrape_interval: 15s
-    static_configs:
-      - targets: ['rust_ingestor:9100']
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - osint_net

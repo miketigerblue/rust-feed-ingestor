@@ -6,9 +6,10 @@ use feed_rs::model::Entry;
 use feed_rs::parser;
 use sqlx::PgPool;
 use std::time::Instant;
+use chrono::NaiveDateTime;
 
 /// Fetch & parse the feed at `url`.
-async fn fetch_feed(url: &str) -> Result<Vec<Entry>, IngestError> {
+pub async fn fetch_feed(url: &str) -> Result<Vec<Entry>, IngestError> {
     FETCH_COUNTER.inc();
     let start = Instant::now();
 
@@ -30,6 +31,7 @@ async fn fetch_feed(url: &str) -> Result<Vec<Entry>, IngestError> {
 
 /// Process a single entry: dedupe & write to DB.
 pub async fn process_entry(pool: &PgPool, entry: &Entry) -> Result<(), IngestError> {
+    // Basic fields…
     let guid = &entry.id;
     let title = entry
         .title
@@ -38,19 +40,27 @@ pub async fn process_entry(pool: &PgPool, entry: &Entry) -> Result<(), IngestErr
         .unwrap_or_default();
     let link = entry
         .links
-        .get(0)
+        .first()
         .map(|l| l.href.clone())
         .unwrap_or_default();
-    let published = entry.published;
+    let published: Option<NaiveDateTime> = entry
+        .published
+        .map(|dt| dt.naive_utc());
+
+    // ==== CONTENT FALLBACK ====  
+    // 1) If <content:encoded> exists and has a body, use it  
+    // 2) Otherwise use <description> (entry.summary)  
+    // 3) Otherwise default to empty
     let content = entry
         .content
         .as_ref()
-        .map(|c| c.body.clone())
+        .and_then(|c| c.body.clone())                 // flatten Option<Option<String>> → Option<String>
+        .or_else(|| entry.summary.as_ref().map(|s| s.content.clone()))
         .unwrap_or_default();
 
-    // Archive existence check
+    // Check archive for duplicates
     let exists: (bool,) = sqlx::query_as(
-        "SELECT EXISTS(SELECT 1 FROM archive WHERE guid = $1)",
+        "SELECT EXISTS(SELECT 1 FROM archive WHERE guid = $1)"
     )
     .bind(guid)
     .fetch_one(pool)
@@ -59,7 +69,7 @@ pub async fn process_entry(pool: &PgPool, entry: &Entry) -> Result<(), IngestErr
     if !exists.0 {
         sqlx::query(
             "INSERT INTO archive (guid, title, link, published, content)
-             VALUES ($1, $2, $3, $4, $5)",
+             VALUES ($1, $2, $3, $4, $5)"
         )
         .bind(guid)
         .bind(&title)
@@ -70,15 +80,15 @@ pub async fn process_entry(pool: &PgPool, entry: &Entry) -> Result<(), IngestErr
         .await?;
     }
 
-    // Upsert current
+    // Upsert into current
     sqlx::query(
         "INSERT INTO current (guid, title, link, published, content)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (guid) DO UPDATE SET
-           title = EXCLUDED.title,
-           link = EXCLUDED.link,
+           title     = EXCLUDED.title,
+           link      = EXCLUDED.link,
            published = EXCLUDED.published,
-           content = EXCLUDED.content",
+           content   = EXCLUDED.content"
     )
     .bind(guid)
     .bind(&title)

@@ -1,7 +1,0 @@
-/Users/mike/rust-feed-ingestor/target/debug/deps/libsmallvec-ed3bbb73e86c0130.rmeta: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/smallvec-1.15.0/src/lib.rs
-
-/Users/mike/rust-feed-ingestor/target/debug/deps/libsmallvec-ed3bbb73e86c0130.rlib: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/smallvec-1.15.0/src/lib.rs
-
-/Users/mike/rust-feed-ingestor/target/debug/deps/smallvec-ed3bbb73e86c0130.d: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/smallvec-1.15.0/src/lib.rs
-
-/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/smallvec-1.15.0/src/lib.rs:
