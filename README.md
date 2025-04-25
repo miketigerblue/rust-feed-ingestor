@@ -28,7 +28,7 @@ A best-practice, secure-by-default Rust service for ingesting RSS/Atom feeds int
 ### Clone & Run
 
 ```bash
-git clone https://github.com/<you>/rust-osint-feed-ingestor.git
+git clone https://github.com/miketigerblue/rust-osint-feed-ingestor.git
 cd rust-osint-feed-ingestor
 
 docker-compose up -d --build
