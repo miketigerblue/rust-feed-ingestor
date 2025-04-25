@@ -1,0 +1,12 @@
+/Users/mike/rust-feed-ingestor/target/debug/deps/libquick_xml-b8194cf5724cb2fd.rmeta: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/lib.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/errors.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/escapei.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/events/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/events/attributes.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/reader.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/utils.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/writer.rs
+
+/Users/mike/rust-feed-ingestor/target/debug/deps/quick_xml-b8194cf5724cb2fd.d: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/lib.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/errors.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/escapei.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/events/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/events/attributes.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/reader.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/utils.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/writer.rs
+
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/lib.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/errors.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/escapei.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/events/mod.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/events/attributes.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/reader.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/utils.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quick-xml-0.20.0/src/writer.rs:

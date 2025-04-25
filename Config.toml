@@ -1,0 +1,10 @@
+# Place next to binary or mount as a Config.toml
+
+database_url = "postgres://user:pass@db:5432/osint?sslmode=disable"
+feed_urls = [
+  "https://hnrss.org/frontpage",
+  "https://example.com/security.rss"
+]
+ingest_interval = "1h"
+# HTTP binding for metrics & health
+server_bind = "0.0.0.0:9100"

@@ -1,0 +1,12 @@
+/Users/mike/rust-feed-ingestor/target/debug/deps/liblibc-93378c81d0bad37c.rmeta: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/lib.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/macros.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/primitives.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/b64/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/b64/aarch64/mod.rs
+
+/Users/mike/rust-feed-ingestor/target/debug/deps/libc-93378c81d0bad37c.d: /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/lib.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/macros.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/primitives.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/b64/mod.rs /Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/b64/aarch64/mod.rs
+
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/lib.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/macros.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/primitives.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/mod.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/mod.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/mod.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/b64/mod.rs:
+/Users/mike/.cargo/registry/src/index.crates.io-6f17d22bba15001f/libc-0.2.172/src/unix/bsd/apple/b64/aarch64/mod.rs:

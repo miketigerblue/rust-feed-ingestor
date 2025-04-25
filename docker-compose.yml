@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: osint_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: osint
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  rust_ingestor:
+    build: .
+    image: rust_feed_ingestor:latest
+    container_name: rust_ingestor
+    depends_on:
+      - db
+    environment:
+      APP__DATABASE_URL: "postgres://user:pass@db:5432/osint?sslmode=disable"
+      APP__FEED_URLS: "https://hnrss.org/frontpage,https://example.com/security.rss"
+      APP__INGEST_INTERVAL: "1h"
+      APP__SERVER_BIND: "0.0.0.0:9100"
+    ports:
+      - "9100:9100"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - rust_ingestor
+
+volumes:
+  db_data:
+
+# prometheus.yml
+# Place this file alongside docker-compose.yml
+# Scrapes the Rust ingestor's metrics endpoint every 15s
+# -----------------------------------------
+scrape_configs:
+  - job_name: 'rust_ingestor'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['rust_ingestor:9100']
