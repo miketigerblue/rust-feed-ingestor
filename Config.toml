@@ -1,10 +1,31 @@
-# Place next to binary or mount as a Config.toml
+# ────────────────────────────────────────────────────────────────────
+# Global settings
+# ────────────────────────────────────────────────────────────────────
+database_url    = "postgres://user:pass@db:5432/osint?sslmode=disable"
+ingest_interval = "1h"                     # human-readable (parsed by humantime_serde)
+server_bind     = "0.0.0.0:9100"           # metrics & health HTTP endpoint
 
-database_url = "postgres://user:pass@db:5432/osint?sslmode=disable"
-feed_urls = [
-    "https://feeds.feedburner.com/TheHackersNews",
-    "https://threatpost.com/feed/",
-]
-ingest_interval = "1h"
-# HTTP binding for metrics & health
-server_bind = "0.0.0.0:9100"
+# ────────────────────────────────────────────────────────────────────
+# Feeds
+# ────────────────────────────────────────────────────────────────────
+# Define your sources here as a TOML array of tables.
+# You can extend each item with `feed_type`, `tags`, etc.
+[[feeds]]
+name      = "CISA Cybersecurity Alerts (US-CERT)"
+url       = "https://us-cert.cisa.gov/ncas/alerts.xml"
+feed_type = "official"
+tags      = ["threat-alerts", "vulnerabilities"]
+
+[[feeds]]
+name      = "Krebs on Security"
+url       = "https://krebsonsecurity.com/feed/"
+feed_type = "independent"
+tags      = ["breaches", "investigations"]
+
+[[feeds]]
+name      = "SANS Internet Storm Center Diaries"
+url       = "https://isc.sans.edu/rssfeed_full.xml"
+feed_type = "community"
+tags      = ["daily-analysis", "malware"]
+
+# …continue for all of your 20 feeds…
