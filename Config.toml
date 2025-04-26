@@ -5,11 +5,9 @@ database_url    = "postgres://user:pass@db:5432/osint?sslmode=disable"
 ingest_interval = "1h"                     # human-readable (parsed by humantime_serde)
 server_bind     = "0.0.0.0:9100"           # metrics & health HTTP endpoint
 
-# ────────────────────────────────────────────────────────────────────
-# Feeds
-# ────────────────────────────────────────────────────────────────────
-# Define your sources here as a TOML array of tables.
-# You can extend each item with `feed_type`, `tags`, etc.
+# ───────────────────────────────────────────────────────────────────────────────
+# Feed sources
+# ───────────────────────────────────────────────────────────────────────────────
 [[feeds]]
 name      = "CISA Cybersecurity Alerts (US-CERT)"
 url       = "https://us-cert.cisa.gov/ncas/alerts.xml"
@@ -17,15 +15,115 @@ feed_type = "official"
 tags      = ["threat-alerts", "vulnerabilities"]
 
 [[feeds]]
-name      = "Krebs on Security"
-url       = "https://krebsonsecurity.com/feed/"
-feed_type = "independent"
-tags      = ["breaches", "investigations"]
+name      = "CISA Vulnerability Advisories"
+url       = "https://www.cisa.gov/cybersecurity-advisories/all.xml"
+feed_type = "official"
+tags      = ["vulnerabilities", "patches"]
+
+[[feeds]]
+name      = "UK NCSC Updates"
+url       = "https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml"
+feed_type = "official"
+tags      = ["advisories", "guidance"]
 
 [[feeds]]
 name      = "SANS Internet Storm Center Diaries"
 url       = "https://isc.sans.edu/rssfeed_full.xml"
 feed_type = "community"
-tags      = ["daily-analysis", "malware"]
+tags      = ["analysis", "daily-threat"]
 
-# …continue for all of your 20 feeds…
+[[feeds]]
+name      = "Krebs on Security"
+url       = "https://krebsonsecurity.com/feed/"
+feed_type = "independent"
+tags      = ["investigations", "breaches"]
+
+[[feeds]]
+name      = "DataBreaches.net"
+url       = "https://databreaches.net/feed/"
+feed_type = "independent"
+tags      = ["breaches", "leaks"]
+
+[[feeds]]
+name      = "BleepingComputer"
+url       = "https://www.bleepingcomputer.com/feed/"
+feed_type = "independent"
+tags      = ["malware", "vulnerabilities"]
+
+[[feeds]]
+name      = "Dark Reading"
+url       = "https://www.darkreading.com/rss/all.xml"
+feed_type = "independent"
+tags      = ["industry-news", "analysis"]
+
+[[feeds]]
+name      = "Threatpost"
+url       = "https://threatpost.com/feed/"
+feed_type = "independent"
+tags      = ["vulnerabilities", "policy"]
+
+[[feeds]]
+name      = "The Hacker News"
+url       = "https://feeds.feedburner.com/TheHackersNews"
+feed_type = "independent"
+tags      = ["general-security", "updates"]
+
+[[feeds]]
+name      = "Schneier on Security"
+url       = "https://www.schneier.com/blog/atom.xml"
+feed_type = "independent"
+tags      = ["insights", "policy"]
+
+[[feeds]]
+name      = "Graham Cluley Security"
+url       = "https://www.grahamcluley.com/feed/"
+feed_type = "independent"
+tags      = ["malware", "privacy"]
+
+[[feeds]]
+name      = "Malwarebytes Labs"
+url       = "https://blog.malwarebytes.com/feed/"
+feed_type = "independent"
+tags      = ["malware-research", "threat-trends"]
+
+[[feeds]]
+name      = "Cisco Talos Intelligence Blog"
+url       = "https://feeds.feedburner.com/feedburner/Talos"
+feed_type = "independent"
+tags      = ["threat-intel", "IOCs"]
+
+[[feeds]]
+name      = "Securelist (Kaspersky GReAT)"
+url       = "https://securelist.com/feed/"
+feed_type = "independent"
+tags      = ["APTs", "reverse-engineering"]
+
+[[feeds]]
+name      = "Exploit-DB Latest Exploits"
+url       = "https://www.exploit-db.com/rss.xml"
+feed_type = "open-source"
+tags      = ["exploit-code", "PoC"]
+
+[[feeds]]
+name      = "CERT/CC Vulnerability Notes"
+url       = "https://www.kb.cert.org/vulfeed/"
+feed_type = "official"
+tags      = ["vulnerabilities", "multi-vendor"]
+
+[[feeds]]
+name      = "Reddit r/netsec"
+url       = "https://www.reddit.com/r/netsec/.rss"
+feed_type = "community"
+tags      = ["community", "discussion"]
+
+[[feeds]]
+name      = "Microsoft Security Response Center (MSRC)"
+url       = "https://msrc-blog.microsoft.com/feed/"
+feed_type = "official"
+tags      = ["patches", "product-security"]
+
+[[feeds]]
+name      = "CERT-EU Security Advisories"
+url       = "https://cert.europa.eu/cert/Data/newsletter/reviewlatest-SecurityBulletins.xml"
+feed_type = "official"
+tags      = ["EU-advisories", "vulnerabilities"]

@@ -8,7 +8,7 @@
 //!  - `server_bind`        – HTTP bind address for metrics & health endpoints
 //!  - `feeds: Vec<Feed>`   – Your list of RSS/Atom sources with metadata
 
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use futures::stream::{FuturesUnordered, StreamExt};
 use hyper::service::{make_service_fn, service_fn};
@@ -67,32 +67,30 @@ async fn main() -> Result<(), IngestError> {
     // ───────────────────────────────────────────────────────────────
     // 4. HTTP server for metrics & health
     // ───────────────────────────────────────────────────────────────
-    let addr = settings
+    let addr: SocketAddr = settings
         .server_bind
         .parse()
         .expect("Invalid `server_bind` in configuration");
 
-    // make_service_fn: called once per connection (_conn is &AddrStream)
     let make_svc = make_service_fn(move |_conn| {
-        // service_fn: called once per request, takes exactly one argument: the Request<Body>
         async move {
             Ok::<_, IngestError>(service_fn(move |req: Request<Body>| {
-                // inner async block returns a Result<Response<Body>, IngestError>
-                async move -> Result<Response<Body>, IngestError> {
+                async move {
                     match (req.method(), req.uri().path()) {
                         (&Method::GET, "/metrics") => {
                             let body = metrics::gather_metrics();
-                            Ok(Response::new(Body::from(body)))
+                            // TURBOFISH to fix E0282:
+                            Ok::<Response<Body>, IngestError>(Response::new(Body::from(body)))
                         }
                         (&Method::GET, "/healthz") => {
-                            Ok(Response::new(Body::from("OK")))
+                            Ok::<Response<Body>, IngestError>(Response::new(Body::from("OK")))
                         }
                         _ => {
-                            let not_found = Response::builder()
+                            let nf = Response::builder()
                                 .status(404)
                                 .body(Body::empty())
                                 .unwrap();
-                            Ok(not_found)
+                            Ok::<Response<Body>, IngestError>(nf)
                         }
                     }
                 }
@@ -100,7 +98,6 @@ async fn main() -> Result<(), IngestError> {
         }
     });
 
-    // Spawn the HTTP server in the background
     tokio::spawn(async move {
         info!(%addr, "Starting metrics & health server");
         Server::bind(&addr)
@@ -119,7 +116,6 @@ async fn main() -> Result<(), IngestError> {
         ticker.tick().await;
         info!("Beginning ingestion cycle for {} feeds", feeds.len());
 
-        // Build a FuturesUnordered of feed‐fetch tasks
         let mut tasks = FuturesUnordered::new();
         for feed in feeds.iter().cloned() {
             let pool = pool.clone();
@@ -145,9 +141,7 @@ async fn main() -> Result<(), IngestError> {
             });
         }
 
-        // Drive all the fetch tasks to completion
         while let Some(_) = tasks.next().await {}
-
         info!("Ingestion cycle complete, waiting for next tick…");
     }
 }
