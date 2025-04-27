@@ -43,7 +43,6 @@ services:
       - db
     environment:
       APP__DATABASE_URL: "postgres://user:pass@db:5432/osint?sslmode=disable"
-      APP__FEED_URLS: "https://feeds.feedburner.com/TheHackersNews,https://threatpost.com/feed/"
       APP__INGEST_INTERVAL: "1h"
       APP__SERVER_BIND: "0.0.0.0:9100"
     ports:
@@ -78,5 +77,18 @@ services:
       - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
+    networks:
+      - osint_net
+
+  postgrest:
+    image: postgrest/postgrest:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    volumes:
+      - ./postgrest.conf:/etc/postgrest.conf:ro
+    command: ["postgrest", "/etc/postgrest.conf"]
+    ports:
+      - "3001:3000"
     networks:
       - osint_net

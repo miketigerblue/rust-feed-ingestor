@@ -11,7 +11,7 @@ edition     = "2021"
 authors     = ["Mike Harris <mike@tigerblue.tech>"]
 description = "Modular OSINT feed ingestor with Prometheus metrics and SQLx migrations"
 license     = "MIT"
-repository  = "https://github.com/<you>/rust-osint-feed-ingestor"
+repository  = "https://github.com/miketigerblue/rust-osint-feed-ingestor"
 readme      = "README.md"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -59,6 +59,7 @@ anyhow              = "1.0"
 
 # Chrono date/time types (with Serde support)
 chrono              = { version = "0.4", features = ["serde"] }
+futures = "0.3.31"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dev-dependencies (for testing)
