@@ -76,7 +76,7 @@ tags      = ["insights", "policy"]
 
 [[feeds]]
 name      = "Graham Cluley Security"
-url       = "https://www.grahamcluley.com/feed/"
+url       = "https://grahamcluley.com/feed/"
 feed_type = "independent"
 tags      = ["malware", "privacy"]
 
@@ -112,7 +112,7 @@ tags      = ["vulnerabilities", "multi-vendor"]
 
 [[feeds]]
 name      = "Reddit r/netsec"
-url       = "https://www.reddit.com/r/netsec/.rss"
+url       = "https://www.reddit.com/r/netsec.rss"
 feed_type = "community"
 tags      = ["community", "discussion"]
 
