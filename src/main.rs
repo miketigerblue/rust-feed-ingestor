@@ -136,7 +136,7 @@ async fn main() -> Result<(), IngestError> {
             });
         }
 
-        while let Some(_) = tasks.next().await {}
+        while tasks.next().await.is_some() {}
         info!("Ingestion cycle complete, waiting for next tick…");
     }
 }
