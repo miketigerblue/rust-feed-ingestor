@@ -37,9 +37,7 @@ async fn main() -> Result<(), IngestError> {
     // ───────────────────────────────────────────────────────────────
     // 1. Initialise tracing / logging
     // ───────────────────────────────────────────────────────────────
-    fmt()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+    fmt().with_env_filter(EnvFilter::from_default_env()).init();
     info!("Starting OSINT feed ingestor…");
 
     // ───────────────────────────────────────────────────────────────
@@ -86,10 +84,7 @@ async fn main() -> Result<(), IngestError> {
                             Ok::<Response<Body>, IngestError>(Response::new(Body::from("OK")))
                         }
                         _ => {
-                            let nf = Response::builder()
-                                .status(404)
-                                .body(Body::empty())
-                                .unwrap();
+                            let nf = Response::builder().status(404).body(Body::empty()).unwrap();
                             Ok::<Response<Body>, IngestError>(nf)
                         }
                     }

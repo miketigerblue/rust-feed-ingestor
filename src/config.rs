@@ -1,11 +1,11 @@
 //! Type-safe configuration loader using the `config` crate,
 //! with manual environment-variable overrides for core settings.
 
-use serde::Deserialize;
-use humantime_serde;
-use humantime;
-use std::{env, time::Duration};
 use config::{Config, ConfigError, File};
+use humantime;
+use humantime_serde;
+use serde::Deserialize;
+use std::{env, time::Duration};
 
 /// Top-level application settings loaded from `Config.toml`
 /// and then overridden (where applicable) by environment variables.
@@ -64,8 +64,8 @@ impl Settings {
             settings.database_url = val;
         }
         if let Ok(val) = env::var("APP__INGEST_INTERVAL") {
-            settings.ingest_interval = humantime::parse_duration(&val)
-                .map_err(|e| ConfigError::Foreign(Box::new(e)))?;
+            settings.ingest_interval =
+                humantime::parse_duration(&val).map_err(|e| ConfigError::Foreign(Box::new(e)))?;
         }
         if let Ok(val) = env::var("APP__SERVER_BIND") {
             settings.server_bind = val;

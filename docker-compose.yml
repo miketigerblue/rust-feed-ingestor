@@ -43,7 +43,7 @@ services:
       - db
     environment:
       APP__DATABASE_URL: "postgres://user:pass@db:5432/osint?sslmode=disable"
-      APP__INGEST_INTERVAL: "1h"
+      APP__INGEST_INTERVAL: "5m"
       APP__SERVER_BIND: "0.0.0.0:9100"
     ports:
       - "9100:9100"

@@ -52,7 +52,7 @@ tags      = ["malware", "vulnerabilities"]
 
 [[feeds]]
 name      = "Dark Reading"
-url       = "https://www.darkreading.com/rss/all.xml"
+url       = "https://www.darkreading.com/rss.xml"
 feed_type = "independent"
 tags      = ["industry-news", "analysis"]
 
@@ -112,7 +112,7 @@ tags      = ["vulnerabilities", "multi-vendor"]
 
 [[feeds]]
 name      = "Reddit r/netsec"
-url       = "https://www.reddit.com/r/netsec.rss"
+url       = "http://www.reddit.com/r/netsec/.rss"
 feed_type = "community"
 tags      = ["community", "discussion"]
 
@@ -124,6 +124,7 @@ tags      = ["patches", "product-security"]
 
 [[feeds]]
 name      = "CERT-EU Security Advisories"
-url       = "https://cert.europa.eu/cert/Data/newsletter/reviewlatest-SecurityBulletins.xml"
+url       = "https://cert.europa.eu/publications/threat-intelligence-rss"
+
 feed_type = "official"
 tags      = ["EU-advisories", "vulnerabilities"]

@@ -1,0 +1,22 @@
+[
+  {
+    "severity": "CRITICAL",
+    "count": 73
+  },
+  {
+    "severity": "HIGH",
+    "count": 406
+  },
+  {
+    "severity": "IMPORTANT",
+    "count": 1
+  },
+  {
+    "severity": "LOW",
+    "count": 312
+  },
+  {
+    "severity": "MEDIUM",
+    "count": 373
+  }
+]
