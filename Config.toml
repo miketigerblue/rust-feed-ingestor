@@ -38,11 +38,6 @@ url       = "https://krebsonsecurity.com/feed/"
 feed_type = "independent"
 tags      = ["investigations", "breaches"]
 
-[[feeds]]
-name      = "DataBreaches.net"
-url       = "https://databreaches.net/feed/"
-feed_type = "independent"
-tags      = ["breaches", "leaks"]
 
 [[feeds]]
 name      = "BleepingComputer"
@@ -75,12 +70,6 @@ feed_type = "independent"
 tags      = ["insights", "policy"]
 
 [[feeds]]
-name      = "Graham Cluley Security"
-url       = "https://grahamcluley.com/feed/"
-feed_type = "independent"
-tags      = ["malware", "privacy"]
-
-[[feeds]]
 name      = "Malwarebytes Labs"
 url       = "https://blog.malwarebytes.com/feed/"
 feed_type = "independent"
@@ -111,12 +100,6 @@ feed_type = "official"
 tags      = ["vulnerabilities", "multi-vendor"]
 
 [[feeds]]
-name      = "Reddit r/netsec"
-url       = "http://www.reddit.com/r/netsec/.rss"
-feed_type = "community"
-tags      = ["community", "discussion"]
-
-[[feeds]]
 name      = "Microsoft Security Response Center (MSRC)"
 url       = "https://msrc-blog.microsoft.com/feed/"
 feed_type = "official"
@@ -125,6 +108,5 @@ tags      = ["patches", "product-security"]
 [[feeds]]
 name      = "CERT-EU Security Advisories"
 url       = "https://cert.europa.eu/publications/threat-intelligence-rss"
-
 feed_type = "official"
 tags      = ["EU-advisories", "vulnerabilities"]

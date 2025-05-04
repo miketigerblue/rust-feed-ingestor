@@ -2,4 +2,4 @@ scrape_configs:
   - job_name: 'rust_ingestor'
     scrape_interval: 15s
     static_configs:
-      - targets: ['osint.local:9100']
+      - targets: ['rust_ingestor:9100']
