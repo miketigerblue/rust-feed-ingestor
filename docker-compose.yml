@@ -43,7 +43,7 @@ services:
       - db
     environment:
       APP__DATABASE_URL: "postgres://user:pass@db:5432/osint?sslmode=disable"
-      APP__INGEST_INTERVAL: "15m"
+      APP__INGEST_INTERVAL: "1m"
       APP__SERVER_BIND: "0.0.0.0:9100"
       RUST_LOG: "rust_feed_ingestor=info,sqlx=warn"
     ports:

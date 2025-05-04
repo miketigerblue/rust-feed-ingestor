@@ -13,7 +13,7 @@ use std::{net::SocketAddr, sync::Arc, time::Instant};
 use futures::stream::{FuturesUnordered, StreamExt};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server};
-use prometheus::{TextEncoder, Encoder}; // ← bring Encoder trait into scope
+use prometheus::{Encoder, TextEncoder}; // ← bring Encoder trait into scope
 use sqlx::postgres::PgPoolOptions;
 use tokio::time::interval;
 use tracing::{error, info};
@@ -38,9 +38,7 @@ async fn main() -> Result<(), IngestError> {
     // ───────────────────────────────────────────────────────────────
     // 1. Initialise tracing / logging
     // ───────────────────────────────────────────────────────────────
-    fmt()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+    fmt().with_env_filter(EnvFilter::from_default_env()).init();
     info!("Starting OSINT feed ingestor…");
 
     // ───────────────────────────────────────────────────────────────
@@ -103,17 +101,13 @@ async fn main() -> Result<(), IngestError> {
 
                         // ─── HEALTHCHECK ENDPOINT ───────────────────────────
                         (&Method::GET, "/healthz") => {
-                            Ok::<Response<Body>, IngestError>(
-                                Response::new(Body::from("OK")),
-                            )
+                            Ok::<Response<Body>, IngestError>(Response::new(Body::from("OK")))
                         }
 
                         // ─── ANY OTHER ROUTE ────────────────────────────────
                         _ => {
-                            let not_found = Response::builder()
-                                .status(404)
-                                .body(Body::empty())
-                                .unwrap();
+                            let not_found =
+                                Response::builder().status(404).body(Body::empty()).unwrap();
                             Ok::<Response<Body>, IngestError>(not_found)
                         }
                     }
@@ -198,26 +192,28 @@ async fn main() -> Result<(), IngestError> {
         }
 
         // Aggregate results from all feed tasks
-        let mut total_entries  = 0;
-        let mut total_errors   = 0;
+        let mut total_entries = 0;
+        let mut total_errors = 0;
         let mut total_duration = 0.0_f64;
 
         while let Some((_, dur, count, errs)) = tasks.next().await {
             total_duration += dur;
-            total_entries  += count;
-            total_errors   += errs;
+            total_entries += count;
+            total_errors += errs;
         }
 
         // Log the cycle summary
         let cycle_secs = cycle_start.elapsed().as_secs_f64();
         info!(
-            total_feeds   = feeds.len(),
+            total_feeds = feeds.len(),
             total_entries = total_entries,
-            total_errors  = total_errors,
-            avg_fetch_s   = if feeds.len() > 0 {
-                               total_duration / (feeds.len() as f64)
-                           } else { 0.0 },
-            cycle_s       = cycle_secs,
+            total_errors = total_errors,
+            avg_fetch_s = if feeds.len() > 0 {
+                total_duration / (feeds.len() as f64)
+            } else {
+                0.0
+            },
+            cycle_s = cycle_secs,
             "Ingestion cycle complete"
         );
 

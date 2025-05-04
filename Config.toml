@@ -110,3 +110,17 @@ name      = "CERT-EU Security Advisories"
 url       = "https://cert.europa.eu/publications/threat-intelligence-rss"
 feed_type = "official"
 tags      = ["EU-advisories", "vulnerabilities"]
+
+[[feeds]]
+name      = "Reddit /r/netsec feed"
+url       = "https://www.reddit.com/r/netsec/.rss"
+feed_type = "Open Source (Community)"
+tags      = ["Reddit", "netsec"]
+
+
+[[feeds]]
+name      = "Palo Alto Networks Security Advisories"
+url       = "https://security.paloaltonetworks.com/rss.xml"
+feed_type = "Vendor"
+tags      = ["Palo Alto Networks", "Security Avisories"]
+
