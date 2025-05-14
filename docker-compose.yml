@@ -74,6 +74,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: "admin"
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s"
+      GF_INSTALL_PLUGINS: "yesoreyeram-infinity-datasource, grafana-llm-app"
     volumes:
       - grafana_data:/var/lib/grafana
     ports:
