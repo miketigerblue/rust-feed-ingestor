@@ -9,6 +9,7 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:13
@@ -25,14 +26,17 @@ jobs:
           --health-retries 5
 
     steps:
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Rust with desired components
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
 
+      # Restore and cache Cargo dependencies for quicker builds
       - name: Cache Cargo registry
         uses: actions/cache@v3
         with:
@@ -47,27 +51,34 @@ jobs:
           key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-git-
 
+      # Enforce Rust style
       - name: Check formatting (rustfmt)
         run: cargo fmt -- --check
 
+      # Enforce code lints (clippy)
       - name: Lint code (clippy)
         run: cargo clippy --all-targets -- -D warnings
 
+      # Security: Auditing dependencies (ignores sqlx-mysql/rsa false positive)
       - name: Dependency audit (cargo-audit)
         run: |
           cargo install cargo-audit --locked
           cargo audit --ignore RUSTSEC-2023-0071
 
+      # Security: Licenses and supply chain
+      # Your .cargo/deny.toml must allow "MIT" and "Apache-2.0"
       - name: Security lint (cargo-deny)
         run: |
           cargo install cargo-deny --locked
           cargo deny check
 
+      # Security: Static Analysis for unsafe code (cargo-geiger)
       - name: SAST (cargo-geiger)
         run: |
           cargo install cargo-geiger --locked
           cargo geiger --all
 
+      # Security: Advanced CodeQL (optional, highly recommended for GitHub-hosted projects)
       - name: SAST (CodeQL)
         uses: github/codeql-action/init@v3
         with:
@@ -79,19 +90,23 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
+      # Run your tests with output
       - name: Run tests
         run: cargo test -- --nocapture
 
+      # Install SQLx CLI for migrations
       - name: Install sqlx-cli
         run: cargo install sqlx-cli --no-default-features --features postgres
         env:
           CARGO_INSTALL_ROOT: ~/.cargo/bin
 
+      # Automatically apply migrations to test database
       - name: Run SQLx migrations
         env:
           DATABASE_URL: postgres://user:pass@localhost:5432/osint
         run: sqlx migrate run
 
+      # Optional: Build Docker image (for deployment or to verify Dockerfile)
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -100,6 +115,7 @@ jobs:
           push: false
           tags: rust_feed_ingestor:latest
 
+      # Software Bill of Materials (SBOM) for supply chain
       - name: Generate SBOM (cargo-sbom)
         run: |
           cargo install cargo-sbom --locked
@@ -111,6 +127,7 @@ jobs:
           name: sbom-cyclonedx
           path: sbom.xml
 
+      # Upload release binary for distribution/artifact archive
       - name: Upload release binary
         uses: actions/upload-artifact@v4
         with:

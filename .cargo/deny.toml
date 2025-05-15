@@ -1,12 +1,8 @@
 [licenses]
-# This is the default for new Rust projects
 allow = [
     "Apache-2.0",
     "MIT",
-    # Optionally:
     "BSD-3-Clause",
     "ISC",
     "Zlib"
 ]
-# Accept all OSI-approved and FSF Free/Libre, optional:
-allow-osi-fsf-free = true
