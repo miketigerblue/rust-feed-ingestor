@@ -1,8 +1,6 @@
 //! Prometheus metrics registry and metric definitions.
 use once_cell::sync::Lazy;
-use prometheus::{
-    Encoder, Histogram, HistogramOpts, IntCounter, Opts, Registry, TextEncoder,
-};
+use prometheus::{Encoder, Histogram, HistogramOpts, IntCounter, Opts, Registry, TextEncoder};
 
 /// Global registry under crate namespace
 pub static REGISTRY: Lazy<Registry> = Lazy::new(|| {

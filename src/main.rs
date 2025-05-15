@@ -15,9 +15,9 @@ use tracing_subscriber::{fmt, EnvFilter};
 use rust_feed_ingestor::config::{Feed, Settings};
 use rust_feed_ingestor::errors::IngestError;
 use rust_feed_ingestor::ingestor::{
-    fetch_feed, process_entry, sanitize_and_validate, entry_to_feed_item
+    entry_to_feed_item, fetch_feed, process_entry, sanitize_and_validate,
 };
-use rust_feed_ingestor::metrics::{self, SANITIZATION_FAILURES, ENTRIES_PROCESSED};
+use rust_feed_ingestor::metrics::{self, ENTRIES_PROCESSED, SANITIZATION_FAILURES};
 
 #[tokio::main]
 async fn main() -> Result<(), IngestError> {
@@ -128,22 +128,20 @@ async fn main() -> Result<(), IngestError> {
                         for entry in &feed_struct.entries {
                             let feed_item = entry_to_feed_item(entry, &feed_struct, &feed_url);
                             match sanitize_and_validate(&feed_item) {
-                                Some(safe_item) => {
-                                    match process_entry(&pool, &safe_item).await {
-                                        Ok(_) => {
-                                            ENTRIES_PROCESSED.inc();
-                                        }
-                                        Err(e) => {
-                                            errors += 1;
-                                            error!(
-                                                feed = %feed_name,
-                                                entry_id = ?entry.id,
-                                                error = %e,
-                                                "Failed to process entry"
-                                            );
-                                        }
+                                Some(safe_item) => match process_entry(&pool, &safe_item).await {
+                                    Ok(_) => {
+                                        ENTRIES_PROCESSED.inc();
                                     }
-                                }
+                                    Err(e) => {
+                                        errors += 1;
+                                        error!(
+                                            feed = %feed_name,
+                                            entry_id = ?entry.id,
+                                            error = %e,
+                                            "Failed to process entry"
+                                        );
+                                    }
+                                },
                                 None => {
                                     errors += 1;
                                     SANITIZATION_FAILURES.inc();

@@ -1,14 +1,14 @@
 //! Core ingestion logic: fetch, parse, dedupe, sanitize, and upsert.
 use crate::errors::IngestError;
 use crate::metrics::{FETCH_COUNTER, FETCH_HISTOGRAM};
+use ammonia::clean;
 use chrono::NaiveDateTime;
 use feed_rs::model::{Entry, Feed};
 use feed_rs::parser;
 use sqlx::PgPool;
 use std::time::Instant;
-use ammonia::clean;
-use url::Url;
 use tracing::warn;
+use url::Url;
 
 /// Unified model: All entry and feed metadata for powerful OSINT queries.
 #[derive(Debug, Clone)]
@@ -36,7 +36,11 @@ pub struct FeedItem {
 /// This will also resolve relative links to absolute URLs using the feed's URL.
 pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedItem {
     // If possible, resolve relative links to absolute using feed_url as base
-    let link_raw = entry.links.get(0).map(|l| l.href.clone()).unwrap_or_default();
+    let link_raw = entry
+        .links
+        .get(0)
+        .map(|l| l.href.clone())
+        .unwrap_or_default();
     let link = match Url::parse(&link_raw) {
         Ok(_) => link_raw.clone(),
         Err(_) => {
@@ -50,7 +54,11 @@ pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedIte
 
     FeedItem {
         guid: entry.id.clone(),
-        title: entry.title.as_ref().map(|t| t.content.clone()).unwrap_or_default(),
+        title: entry
+            .title
+            .as_ref()
+            .map(|t| t.content.clone())
+            .unwrap_or_default(),
         link,
         published: entry.published.map(|dt| dt.naive_utc()),
         content: entry.content.as_ref().and_then(|c| c.body.clone()),
