@@ -56,7 +56,7 @@ jobs:
       - name: Dependency audit (cargo-audit)
         run: |
           cargo install cargo-audit --locked
-          cargo audit
+          cargo audit --config .cargo/audit.toml
 
       - name: Security lint (cargo-deny)
         run: |
