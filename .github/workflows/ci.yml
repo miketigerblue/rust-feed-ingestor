@@ -83,12 +83,18 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: rust
+        env:
+          CODEQL_ENABLE_EXPERIMENTAL_FEATURES: true
 
       - name: Autobuild (CodeQL)
         uses: github/codeql-action/autobuild@v3
+        env:
+          CODEQL_ENABLE_EXPERIMENTAL_FEATURES: true
 
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
+        env:
+          CODEQL_ENABLE_EXPERIMENTAL_FEATURES: true
 
       # Run your tests with output
       - name: Run tests
