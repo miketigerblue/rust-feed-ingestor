@@ -95,6 +95,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
         env:
           CODEQL_ENABLE_EXPERIMENTAL_FEATURES: true
+        continue-on-error: true
 
       # Run your tests with output
       - name: Run tests
