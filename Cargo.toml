@@ -10,7 +10,7 @@ version     = "0.2.0"
 edition     = "2021"
 authors     = ["Mike Harris <mike@tigerblue.tech>"]
 description = "Modular OSINT feed ingestor with Prometheus metrics and SQLx migrations"
-license     = "MIT"
+license     = "MIT OR Apache-2.0"
 repository  = "https://github.com/miketigerblue/rust-osint-feed-ingestor"
 readme      = "README.md"
 
