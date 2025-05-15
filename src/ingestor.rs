@@ -38,7 +38,7 @@ pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedIte
     // If possible, resolve relative links to absolute using feed_url as base
     let link_raw = entry
         .links
-        .get(0)
+        .get(first)
         .map(|l| l.href.clone())
         .unwrap_or_default();
     let link = match Url::parse(&link_raw) {
@@ -63,7 +63,7 @@ pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedIte
         published: entry.published.map(|dt| dt.naive_utc()),
         content: entry.content.as_ref().and_then(|c| c.body.clone()),
         summary: entry.summary.as_ref().map(|s| s.content.clone()),
-        author: entry.authors.get(0).map(|a| a.name.clone()),
+        author: entry.authors.get(first).map(|a| a.name.clone()),
         categories: if entry.categories.is_empty() {
             None
         } else {
