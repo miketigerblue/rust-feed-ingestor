@@ -6,7 +6,7 @@
 
 [package]
 name        = "rust_feed_ingestor"
-version     = "0.1.0"
+version     = "0.2.0"
 edition     = "2021"
 authors     = ["Mike Harris <mike@tigerblue.tech>"]
 description = "Modular OSINT feed ingestor with Prometheus metrics and SQLx migrations"
@@ -32,7 +32,7 @@ url = "2.3"
 
 
 # Database access + migrations
-sqlx                = { version = "0.6", features = ["postgres","runtime-tokio-native-tls","macros","chrono","migrate"] }
+sqlx                = { version = "0.8.1", features = ["postgres","runtime-tokio-native-tls","macros","chrono","migrate"] }
 
 # Duration parsing + Serde glue
 humantime           = "2.2.0"
