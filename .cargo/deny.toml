@@ -4,5 +4,6 @@ allow = [
     "MIT",
     "BSD-3-Clause",
     "ISC",
-    "Zlib"
+    "Zlib",
+    "Unicode-3.0"
 ]
