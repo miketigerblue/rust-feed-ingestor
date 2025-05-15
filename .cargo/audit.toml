@@ -1,0 +1,8 @@
+# Ignore the `rsa` Marvin attack advisory, as it's present only in an unused crate
+# (sqlx-mysql) which is included by SQLx, but not actually depended on by this binary.
+# See https://github.com/launchbadge/sqlx/issues/2353 for details.
+[advisories]
+ignore = [
+    "RUSTSEC-2023-0071",
+    "RUSTSEC-2024-0320"
+]

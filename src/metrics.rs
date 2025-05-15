@@ -1,5 +1,4 @@
 //! Prometheus metrics registry and metric definitions.
-
 use once_cell::sync::Lazy;
 use prometheus::{Encoder, Histogram, HistogramOpts, IntCounter, Opts, Registry, TextEncoder};
 
@@ -26,6 +25,28 @@ pub static FETCH_HISTOGRAM: Lazy<Histogram> = Lazy::new(|| {
     let h = Histogram::with_opts(opts).expect("histogram opts");
     REGISTRY.register(Box::new(h.clone())).unwrap();
     h
+});
+
+/// Total number of feed entries that failed sanitization/validation
+pub static SANITIZATION_FAILURES: Lazy<IntCounter> = Lazy::new(|| {
+    let opts = Opts::new(
+        "sanitization_failures_total",
+        "Total number of feed entries that failed sanitization/validation",
+    );
+    let c = IntCounter::with_opts(opts).expect("counter opts");
+    REGISTRY.register(Box::new(c.clone())).unwrap();
+    c
+});
+
+/// Total number of successfully processed entries
+pub static ENTRIES_PROCESSED: Lazy<IntCounter> = Lazy::new(|| {
+    let opts = Opts::new(
+        "entries_processed_total",
+        "Total number of feed entries successfully sanitized and processed",
+    );
+    let c = IntCounter::with_opts(opts).expect("counter opts");
+    REGISTRY.register(Box::new(c.clone())).unwrap();
+    c
 });
 
 /// Encode all metrics as text

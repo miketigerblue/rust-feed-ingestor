@@ -1,42 +1,28 @@
-//! Entrypoint: set up tracing, run database migrations, start HTTP metrics & health server,
-//! and begin the feed ingestion loop.
-//!
-//! This application uses a strongly-typed configuration (`Settings`) defined in `config.rs`,
-//! which provides:
-//!  - `database_url`       – Postgres connection string
-//!  - `ingest_interval`    – How often to poll each feed
-//!  - `server_bind`        – HTTP bind address for metrics & health endpoints
-//!  - `feeds: Vec<Feed>`   – Your list of RSS/Atom sources with metadata
+//! Entrypoint: sets up tracing/logging, runs database migrations, starts HTTP metrics & health server,
+//! and begins the main OSINT feed ingestion loop.
 
 use std::{net::SocketAddr, sync::Arc, time::Instant};
 
 use futures::stream::{FuturesUnordered, StreamExt};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server};
-use prometheus::{Encoder, TextEncoder}; // ← bring Encoder trait into scope
+use prometheus::{Encoder, TextEncoder};
 use sqlx::postgres::PgPoolOptions;
 use tokio::time::interval;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use tracing_subscriber::{fmt, EnvFilter};
 
 use rust_feed_ingestor::config::{Feed, Settings};
 use rust_feed_ingestor::errors::IngestError;
-use rust_feed_ingestor::ingestor::{fetch_feed, process_entry};
-use rust_feed_ingestor::metrics;
+use rust_feed_ingestor::ingestor::{
+    entry_to_feed_item, fetch_feed, process_entry, sanitize_and_validate,
+};
+use rust_feed_ingestor::metrics::{self, ENTRIES_PROCESSED, SANITIZATION_FAILURES};
 
-/// Application entrypoint for the OSINT feed ingestor.
-///
-/// **Workflow**:
-/// 1. Initialise tracing/logging from `RUST_LOG` (or default to `info`).  
-/// 2. Load `Config.toml` (and apply any `APP__…` env-var overrides).  
-/// 3. Spin up a Postgres pool and run any pending SQLx migrations.  
-/// 4. Launch a background HTTP server on `/metrics` and `/healthz`.  
-/// 5. Enter the ingestion loop: every `ingest_interval`, fetch all feeds
-///    concurrently and process each entry into the database.
 #[tokio::main]
 async fn main() -> Result<(), IngestError> {
     // ───────────────────────────────────────────────────────────────
-    // 1. Initialise tracing / logging
+    // 1. Initialize tracing / logging
     // ───────────────────────────────────────────────────────────────
     fmt().with_env_filter(EnvFilter::from_default_env()).init();
     info!("Starting OSINT feed ingestor…");
@@ -55,7 +41,6 @@ async fn main() -> Result<(), IngestError> {
         .connect(&settings.database_url)
         .await?;
     info!("Connected to Postgres");
-
     info!("Running database migrations…");
     sqlx::migrate!("./migrations")
         .run(&pool)
@@ -64,12 +49,8 @@ async fn main() -> Result<(), IngestError> {
     info!("Migrations complete");
 
     // ───────────────────────────────────────────────────────────────
-    // 4. HTTP server for metrics & health
+    // 4. HTTP server for metrics & health endpoints
     // ───────────────────────────────────────────────────────────────
-    //
-    // We must set the `Content-Type` header on `/metrics` to:
-    //     text/plain; version=0.0.4; charset=utf-8
-    // Otherwise Prometheus (v3+) will reject the scrape.
     let addr: SocketAddr = settings
         .server_bind
         .parse()
@@ -82,28 +63,19 @@ async fn main() -> Result<(), IngestError> {
                     match (req.method(), req.uri().path()) {
                         // ─── METRICS ENDPOINT ────────────────────────────────
                         (&Method::GET, "/metrics") => {
-                            // 1) Gather all metrics into a text body
                             let metrics_text = metrics::gather_metrics();
-
-                            // 2) Create an encoder to retrieve the correct MIME string
                             let encoder = TextEncoder::new();
                             let mime = encoder.format_type();
-                            //    => "text/plain; version=0.0.4; charset=utf-8"
-
-                            // 3) Build a full HTTP response with header + body
                             let resp = Response::builder()
                                 .header("Content-Type", mime)
                                 .body(Body::from(metrics_text))
                                 .expect("Failed to build /metrics response");
-
                             Ok::<Response<Body>, IngestError>(resp)
                         }
-
                         // ─── HEALTHCHECK ENDPOINT ───────────────────────────
                         (&Method::GET, "/healthz") => {
                             Ok::<Response<Body>, IngestError>(Response::new(Body::from("OK")))
                         }
-
                         // ─── ANY OTHER ROUTE ────────────────────────────────
                         _ => {
                             let not_found =
@@ -116,7 +88,6 @@ async fn main() -> Result<(), IngestError> {
         }
     });
 
-    // Spawn the metrics & health HTTP server
     tokio::spawn(async move {
         info!(%addr, "Starting metrics & health server");
         Server::bind(&addr)
@@ -126,89 +97,93 @@ async fn main() -> Result<(), IngestError> {
     });
 
     // ───────────────────────────────────────────────────────────────
-    // 5. Ingestion loop (with enhanced logging)
+    // 5. Main ingestion loop: fetch, parse, sanitize, store, and monitor feeds
     // ───────────────────────────────────────────────────────────────
     let feeds: Arc<Vec<Feed>> = Arc::new(settings.feeds.clone());
     let mut ticker = interval(settings.ingest_interval);
 
     loop {
-        // Mark the start of the cycle to time the whole ingestion
         let cycle_start = Instant::now();
         info!("Starting ingestion cycle for {} feeds", feeds.len());
 
-        // Fire off one task per feed, each returning:
-        // (feed_name, fetch_duration_s, entry_count, errors_occurred)
         let mut tasks = FuturesUnordered::new();
         for feed in feeds.iter().cloned() {
             let pool = pool.clone();
+            let feed_url = feed.url.clone();
+            let feed_name = feed.name.clone();
             tasks.push(async move {
                 let feed_start = Instant::now();
-                let mut errors = 0;
-
-                match fetch_feed(&feed.url).await {
-                    Ok(entries) => {
+                let mut errors: usize = 0;
+                match fetch_feed(&feed_url).await {
+                    Ok(feed_struct) => {
                         let fetch_duration = feed_start.elapsed().as_secs_f64();
-                        let count = entries.len();
-
-                        // Log how many entries we fetched and how long it took
+                        let count = feed_struct.entries.len();
                         info!(
-                            feed      = %feed.name,
-                            url       = %feed.url,
-                            count     = count,
+                            feed = %feed_name,
+                            url = %feed_url,
+                            count = count,
                             duration_s = fetch_duration,
                             "Fetched feed"
                         );
-
-                        // Process each entry, tallying any errors
-                        for entry in entries {
-                            if let Err(e) = process_entry(&pool, &entry).await {
-                                errors += 1;
-                                error!(
-                                    feed     = %feed.name,
-                                    entry_id = ?entry.id,
-                                    error    = %e,
-                                    "Failed to process entry"
-                                );
+                        for entry in &feed_struct.entries {
+                            let feed_item = entry_to_feed_item(entry, &feed_struct, &feed_url);
+                            match sanitize_and_validate(&feed_item) {
+                                Some(safe_item) => match process_entry(&pool, &safe_item).await {
+                                    Ok(_) => {
+                                        ENTRIES_PROCESSED.inc();
+                                    }
+                                    Err(e) => {
+                                        errors += 1;
+                                        error!(
+                                            feed = %feed_name,
+                                            entry_id = ?entry.id,
+                                            error = %e,
+                                            "Failed to process entry"
+                                        );
+                                    }
+                                },
+                                None => {
+                                    errors += 1;
+                                    SANITIZATION_FAILURES.inc();
+                                    warn!(
+                                        feed = %feed_name,
+                                        entry_id = ?entry.id,
+                                        "Entry failed sanitization/validation and was skipped"
+                                    );
+                                }
                             }
                         }
-
-                        (feed.name, fetch_duration, count, errors)
+                        (feed_name, fetch_duration, count, errors)
                     }
                     Err(e) => {
                         let fetch_duration = feed_start.elapsed().as_secs_f64();
                         error!(
-                            feed       = %feed.name,
-                            url        = %feed.url,
-                            error      = %e,
+                            feed = %feed_name,
+                            url = %feed_url,
+                            error = %e,
                             duration_s = fetch_duration,
                             "Failed to fetch feed"
                         );
-
-                        // Treat as zero entries with one error
-                        (feed.name, fetch_duration, 0, 1)
+                        (feed_name, fetch_duration, 0, 1)
                     }
                 }
             });
         }
 
-        // Aggregate results from all feed tasks
-        let mut total_entries = 0;
-        let mut total_errors = 0;
-        let mut total_duration = 0.0_f64;
-
+        let mut total_entries: usize = 0;
+        let mut total_errors: usize = 0;
+        let mut total_duration: f64 = 0.0;
         while let Some((_, dur, count, errs)) = tasks.next().await {
             total_duration += dur;
             total_entries += count;
             total_errors += errs;
         }
-
-        // Log the cycle summary
         let cycle_secs = cycle_start.elapsed().as_secs_f64();
         info!(
             total_feeds = feeds.len(),
             total_entries = total_entries,
             total_errors = total_errors,
-            avg_fetch_s = if feeds.len() > 0 {
+            avg_fetch_s = if !feeds.is_empty() {
                 total_duration / (feeds.len() as f64)
             } else {
                 0.0
@@ -216,8 +191,6 @@ async fn main() -> Result<(), IngestError> {
             cycle_s = cycle_secs,
             "Ingestion cycle complete"
         );
-
-        // Await next tick
         ticker.tick().await;
     }
 }
