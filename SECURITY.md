@@ -39,3 +39,37 @@ This configuration is reviewed regularly and will be updated if a future version
 **Contact**
 
 For any security concerns or if you need further explanation, please open an issue or contact the project maintainer.
+
+## Unmaintained Dependency Allowlist: yaml-rust (RUSTSEC-2024-0320)
+
+**Context:**  
+
+Our project uses the config crate, which (as of our current dependency tree) relies on yaml-rust for YAML configuration support. As of May 2024, yaml-rust is flagged by RUSTSEC-2024-0320 as unmaintained by its original author.
+
+There is no actively maintained direct replacement for yaml-rust that is compatible with the existing config crate.
+config itself does not currently provide a way to disable YAML support via feature flags.
+Our use of YAML config files (if any) is strictly internal; no untrusted YAML input is processed.
+
+**Policy**
+
+We allow this RUSTSEC advisory in our dependency policy and ignore it in our CI/CD security lint. This is tracked in .cargo/deny.toml and/or our pipeline ignore rules:
+
+```
+[advisories]
+ignore = [
+    "RUSTSEC-2023-0071",
+    "RUSTSEC-2024-0320"
+]
+```
+
+**Ongoing Actions**
+
+We monitor the config crate and the wider Rust ecosystem for migration to a maintained YAML library, feature flag, or a viable alternative configuration loader.
+If our threat surface or requirements change, this policy will be re-evaluated.
+
+**References**
+
+- [RUSTSEC-2024-0320 - Advisory Details](https://rustsec.org/advisories/RUSTSEC-2024-0320)
+- [config issue: replace yaml-rust](https://github.com/mehcode/config-rs/issues)
+
+If you have a security concern about this exception, please open an issue or contact project maintainers.
