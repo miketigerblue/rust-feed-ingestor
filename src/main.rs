@@ -183,7 +183,7 @@ async fn main() -> Result<(), IngestError> {
             total_feeds = feeds.len(),
             total_entries = total_entries,
             total_errors = total_errors,
-            avg_fetch_s = if feeds.len() > 0 {
+            avg_fetch_s = if !feeds.is_empty() {
                 total_duration / (feeds.len() as f64)
             } else {
                 0.0
