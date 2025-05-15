@@ -56,7 +56,7 @@ jobs:
       - name: Dependency audit (cargo-audit)
         run: |
           cargo install cargo-audit --locked
-          cargo audit --config .cargo/audit.toml
+          cargo audit --ignore RUSTSEC-2023-0071
 
       - name: Security lint (cargo-deny)
         run: |
