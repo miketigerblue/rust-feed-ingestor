@@ -32,7 +32,8 @@ url = "2.3"
 
 
 # Database access + migrations
-sqlx                = { version = "0.8.1", features = ["postgres","runtime-tokio-native-tls","macros","chrono","migrate"] }
+
+sqlx                = { version = "0.8.1", default-features = false, features = ["postgres", "runtime-tokio-native-tls", "macros", "chrono", "migrate"] }
 
 # Duration parsing + Serde glue
 humantime           = "2.2.0"
