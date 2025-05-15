@@ -51,7 +51,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Lint code (clippy)
-        run: cargo clippy --all-targets --features "postgres runtime-tokio-native-tls macros chrono migrate" -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Dependency audit (cargo-audit)
         run: |
