@@ -128,7 +128,6 @@ jobs:
         run: |
           cargo install cargo-sbom --locked
           cargo sbom --output-format cyclone_dx_json_1_4 > sbom.xml
-          c
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
