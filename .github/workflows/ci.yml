@@ -59,26 +59,25 @@ jobs:
       - name: Lint code (clippy)
         run: cargo clippy --all-targets -- -D warnings
 
-      # Security: Auditing dependencies (ignores sqlx-mysql/rsa false positive)
+      # Security: Auditing dependencies
       - name: Dependency audit (cargo-audit)
         run: |
           cargo install cargo-audit --locked
           cargo audit --ignore RUSTSEC-2023-0071 --ignore RUSTSEC-2024-0320
 
       # Security: Licenses and supply chain
-      # Your .cargo/deny.toml must allow "MIT" and "Apache-2.0"
       - name: Security lint (cargo-deny)
         run: |
           cargo install cargo-deny --locked
           cargo deny check
 
-      # Security: Static Analysis for unsafe code (cargo-geiger)
+      # Security: Static Analysis for unsafe code
       - name: SAST (cargo-geiger)
         run: |
           cargo install cargo-geiger --locked
           cargo geiger --all || echo "Unsafe code found in dependency, proceeding as info only"
 
-      # Security: Advanced CodeQL (optional, highly recommended for GitHub-hosted projects)
+      # Security: Advanced CodeQL (optional)
       - name: SAST (CodeQL)
         uses: github/codeql-action/init@v3
         with:
@@ -104,18 +103,18 @@ jobs:
       # Install SQLx CLI for migrations
       - name: Install sqlx-cli
         run: cargo install sqlx-cli --no-default-features --features postgres
-        env:
-          CARGO_INSTALL_ROOT: ~/.cargo/bin
+
+      # Ensure ~/.cargo/bin is in the PATH for all subsequent steps
+      - name: Add ~/.cargo/bin to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       # Automatically apply migrations to test database
       - name: Run SQLx migrations
         env:
           DATABASE_URL: postgres://user:pass@localhost:5432/osint
-        run: |
-          export PATH="$HOME/.cargo/bin:$PATH"
-          sqlx migrate run
+        run: sqlx migrate run
 
-      # Optional: Build Docker image (for deployment or to verify Dockerfile)
+      # Optional: Build Docker image
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
