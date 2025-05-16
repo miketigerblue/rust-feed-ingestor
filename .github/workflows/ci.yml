@@ -127,7 +127,7 @@ jobs:
       - name: Generate SBOM (cargo-sbom)
         run: |
           cargo install cargo-sbom --locked
-          cargo sbom --output-format clone_dx_json_1_4 > sbom.xml
+          cargo sbom --output-format cyclone_dx_json_1_4 > sbom.xml
           c
 
       - name: Upload SBOM artifact
