@@ -111,7 +111,9 @@ jobs:
       - name: Run SQLx migrations
         env:
           DATABASE_URL: postgres://user:pass@localhost:5432/osint
-        run: sqlx migrate run
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          sqlx migrate run
 
       # Optional: Build Docker image (for deployment or to verify Dockerfile)
       - name: Build Docker image
