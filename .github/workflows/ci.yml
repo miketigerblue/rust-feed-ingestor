@@ -127,7 +127,7 @@ jobs:
       - name: Generate SBOM (cargo-sbom)
         run: |
           cargo install cargo-sbom --locked
-          cargo sbom --output-format cyclonedx > sbom.xml
+          cargo sbom --output-format cyclonedx_json_1_4 > sbom.xml
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
