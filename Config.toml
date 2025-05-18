@@ -32,3 +32,94 @@ url       = "https://isc.sans.edu/rssfeed_full.xml"
 feed_type = "community"
 tags      = ["analysis", "daily-threat"]
 
+[[feeds]]
+name      = "Krebs on Security"
+url       = "https://krebsonsecurity.com/feed/"
+feed_type = "independent"
+tags      = ["investigations", "breaches"]
+
+
+[[feeds]]
+name      = "BleepingComputer"
+url       = "https://www.bleepingcomputer.com/feed/"
+feed_type = "independent"
+tags      = ["malware", "vulnerabilities"]
+
+[[feeds]]
+name      = "Dark Reading"
+url       = "https://www.darkreading.com/rss.xml"
+feed_type = "independent"
+tags      = ["industry-news", "analysis"]
+
+[[feeds]]
+name      = "Threatpost"
+url       = "https://threatpost.com/feed/"
+feed_type = "independent"
+tags      = ["vulnerabilities", "policy"]
+
+[[feeds]]
+name      = "The Hacker News"
+url       = "https://feeds.feedburner.com/TheHackersNews"
+feed_type = "independent"
+tags      = ["general-security", "updates"]
+
+[[feeds]]
+name      = "Schneier on Security"
+url       = "https://www.schneier.com/blog/atom.xml"
+feed_type = "independent"
+tags      = ["insights", "policy"]
+
+[[feeds]]
+name      = "Malwarebytes Labs"
+url       = "https://blog.malwarebytes.com/feed/"
+feed_type = "independent"
+tags      = ["malware-research", "threat-trends"]
+
+[[feeds]]
+name      = "Cisco Talos Intelligence Blog"
+url       = "https://feeds.feedburner.com/feedburner/Talos"
+feed_type = "independent"
+tags      = ["threat-intel", "IOCs"]
+
+[[feeds]]
+name      = "Securelist (Kaspersky GReAT)"
+url       = "https://securelist.com/feed/"
+feed_type = "independent"
+tags      = ["APTs", "reverse-engineering"]
+
+[[feeds]]
+name      = "Exploit-DB Latest Exploits"
+url       = "https://www.exploit-db.com/rss.xml"
+feed_type = "open-source"
+tags      = ["exploit-code", "PoC"]
+
+[[feeds]]
+name      = "CERT/CC Vulnerability Notes"
+url       = "https://www.kb.cert.org/vulfeed/"
+feed_type = "official"
+tags      = ["vulnerabilities", "multi-vendor"]
+
+[[feeds]]
+name      = "Microsoft Security Response Center (MSRC)"
+url       = "https://msrc-blog.microsoft.com/feed/"
+feed_type = "official"
+tags      = ["patches", "product-security"]
+
+[[feeds]]
+name      = "CERT-EU Security Advisories"
+url       = "https://cert.europa.eu/publications/threat-intelligence-rss"
+feed_type = "official"
+tags      = ["EU-advisories", "vulnerabilities"]
+
+[[feeds]]
+name      = "Reddit /r/netsec feed"
+url       = "https://www.reddit.com/r/netsec/.rss"
+feed_type = "Open Source (Community)"
+tags      = ["Reddit", "netsec"]
+
+
+[[feeds]]
+name      = "Palo Alto Networks Security Advisories"
+url       = "https://security.paloaltonetworks.com/rss.xml"
+feed_type = "Vendor"
+tags      = ["Palo Alto Networks", "Security Avisories"]
