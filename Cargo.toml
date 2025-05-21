@@ -70,6 +70,8 @@ chrono              = { version = "0.4", features = ["serde"] }
 futures = "0.3.31"
 htmlescape = "0.3.1"
 scraper = "0.23.1"
+headless_chrome = "1.0.17"
+chromiumoxide = "0.7.0"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dev-dependencies (for testing)

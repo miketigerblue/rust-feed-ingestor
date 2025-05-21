@@ -2,17 +2,26 @@
 //!
 //! Core ingestion logic: fetch, parse, dedupe, sanitize, enrich with live content,
 //! and upsert into Postgres archive and current tables.
+//!
+//! Enhancements:
+//! - Uses cooldown and failure count tracking to avoid spamming live content fetches.
+//! - Integrates headless browser for JS-enabled live content fetching.
+//! - Adds detailed logging per feed and per entry for better observability.
 
-use crate::browser::Browser; // Our polite web fetcher and sanitizer
+use crate::browser::Browser; // Our polite web fetcher and sanitizer using headless Chrome
 use crate::errors::IngestError;
-use crate::metrics::{FETCH_COUNTER, FETCH_HISTOGRAM};
+use crate::metrics::{FETCH_COUNTER, FETCH_HISTOGRAM, ENTRIES_PROCESSED, SANITIZATION_FAILURES};
+use crate::db_utils::{
+    get_failed_fetch_count, update_failed_fetch_count, get_last_fetch_attempt, update_last_fetch_attempt,
+};
+
 use ammonia::clean;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc, Duration};
 use feed_rs::model::{Entry, Feed};
 use feed_rs::parser;
 use sqlx::PgPool;
 use std::time::Instant;
-use tracing::warn;
+use tracing::{warn, error, info};
 use url::Url;
 
 /// Unified model representing a feed entry with provenance and metadata.
@@ -150,23 +159,57 @@ pub async fn fetch_feed(url: &str) -> Result<Feed, IngestError> {
     Ok(feed)
 }
 
-/// Process a single FeedItem: dedupe, enrich with live content if missing, and write to DB.
+/// Process a single FeedItem: dedupe, enrich with live content if missing,
+/// respect cooldowns to avoid spamming, and write to DB.
+///
+/// This function implements:
+/// - Cooldown period (24 hours) between live fetch attempts per entry.
+/// - Tracking of failed fetch count to avoid repeated failures.
+/// - Use of headless browser for JS-enabled live content fetching.
+/// - Logs detailed success/failure info per entry.
 pub async fn process_entry(pool: &PgPool, item: &FeedItem, browser: &Browser) -> Result<(), IngestError> {
-    // Check if the feed-provided content is missing or empty (trimmed)
-    // We only fetch live page content if we really need to.
-    let fetched_content = if item.content.as_ref().map_or(true, |c| c.trim().is_empty()) {
-        // Attempt to fetch and sanitize live content from the article's link.
-        // This is our polite way of filling content gaps without spamming.
+    // Retrieve failure count and last fetch attempt timestamp for cooldown logic
+    let failed_count = get_failed_fetch_count(pool, &item.guid).await.unwrap_or(0);
+    let last_attempt_opt = get_last_fetch_attempt(pool, &item.guid).await.unwrap_or(None);
+
+    let now = Utc::now();
+    let cooldown = Duration::hours(24); // 24-hour cooldown between live fetch attempts
+
+    // Determine if live fetch is needed:
+    // - content is missing or empty after trimming
+    // - cooldown period has passed since last attempt (or no previous attempt)
+    let should_fetch_live = item.content.as_ref().map_or(true, |c| c.trim().is_empty())
+        && (last_attempt_opt.is_none() || now.signed_duration_since(last_attempt_opt.unwrap()) > cooldown);
+
+    // This variable will hold the "full_content" to store (either live fetched or original feed content)
+    let fetched_content = if should_fetch_live {
+        // Update last fetch attempt timestamp immediately to avoid concurrent retries
+        update_last_fetch_attempt(pool, &item.guid, now).await.unwrap_or(());
+
         match browser.fetch_and_clean(&item.link).await {
-            Ok(content) if !content.trim().is_empty() => content,
+            Ok(content) if !content.trim().is_empty() => {
+                // Successful live fetch: reset failure count
+                update_failed_fetch_count(pool, &item.guid, 0).await.unwrap_or(());
+
+                content
+            }
             Ok(_) | Err(_) => {
-                // If fetching failed or returned empty, fallback to feed content (even if empty)
-                tracing::warn!("Live content fetch failed or empty for link: {}", &item.link);
+                // Live fetch failed or returned empty content
+                let new_failed_count = failed_count + 1;
+                update_failed_fetch_count(pool, &item.guid, new_failed_count).await.unwrap_or(());
+
+                warn!(
+                    "Live content fetch failed or empty for link: {}, failed_count: {}",
+                    &item.link,
+                    new_failed_count
+                );
+
+                // Fallback to original feed content, which may be empty
                 item.content.clone().unwrap_or_default()
             }
         }
     } else {
-        // Content exists, no need to fetch again — save the bandwidth!
+        // Content exists or cooldown not expired: use existing content
         item.content.clone().unwrap_or_default()
     };
 
@@ -247,4 +290,96 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem, browser: &Browser) ->
     .await?;
 
     Ok(())
+}
+
+/// Main ingestion loop function to process all feeds.
+/// This function fetches each feed, processes entries, and logs detailed info.
+///
+/// This is an example of how you might wrap the above functions in a loop with rich logging.
+///
+/// # Arguments
+///
+/// * `pool` - Database connection pool
+/// * `feeds` - List of feed configs
+/// * `browser` - Browser instance for live content fetching
+///
+pub async fn ingest_all_feeds(pool: &PgPool, feeds: &[crate::config::Feed], browser: &Browser) {
+    info!("Starting ingestion cycle for {} feeds", feeds.len());
+
+    for feed in feeds.iter() {
+        let feed_name = &feed.name;
+        let feed_url = &feed.url;
+
+        let fetch_start = Instant::now();
+
+        match fetch_feed(feed_url).await {
+            Ok(feed_struct) => {
+                let fetch_duration = fetch_start.elapsed().as_secs_f64();
+                let entries_count = feed_struct.entries.len();
+
+                info!(
+                    feed = %feed_name,
+                    url = %feed_url,
+                    count = entries_count,
+                    duration_s = fetch_duration,
+                    "Fetched feed successfully"
+                );
+
+                let mut success = 0;
+                let mut skipped = 0;
+                let mut errors = 0;
+
+                for entry in &feed_struct.entries {
+                    let feed_item = entry_to_feed_item(entry, &feed_struct, feed_url);
+
+                    match sanitize_and_validate(&feed_item) {
+                        Some(safe_item) => {
+                            match process_entry(pool, &safe_item, browser).await {
+                                Ok(_) => {
+                                    success += 1;
+                                    ENTRIES_PROCESSED.inc();
+                                }
+                                Err(e) => {
+                                    errors += 1;
+                                    error!(
+                                        feed = %feed_name,
+                                        entry_id = ?entry.id,
+                                        error = %e,
+                                        "Failed to process entry"
+                                    );
+                                }
+                            }
+                        }
+                        None => {
+                            skipped += 1;
+                            SANITIZATION_FAILURES.inc();
+                            warn!(
+                                feed = %feed_name,
+                                entry_id = ?entry.id,
+                                "Entry failed sanitization/validation and was skipped"
+                            );
+                        }
+                    }
+                }
+
+                info!(
+                    feed = %feed_name,
+                    success = success,
+                    skipped = skipped,
+                    errors = errors,
+                    "Completed processing feed entries"
+                );
+            }
+            Err(e) => {
+                error!(
+                    feed = %feed_name,
+                    url = %feed_url,
+                    error = %e,
+                    "Failed to fetch feed"
+                );
+            }
+        }
+    }
+
+    info!("Ingestion cycle complete");
 }

@@ -1,68 +1,140 @@
 //! browser.rs
 //!
-//! Responsible for fetching and sanitizing web content safely.
-//! Because raw internet content is like a wild beast — it needs taming before you bring it home.
+//! Connects to a headless Chromium instance (e.g., chromedp/headless-shell or official Chrome running as a sidecar).
+//! Fetches and sanitizes web content, allowing JavaScript execution and cookie handling.
+//! Uses a remote browser via WebSocket (recommended for Docker environments).
 
-use reqwest::Client;
-use scraper::{Html, Selector};
+use chromiumoxide::browser::Browser as ChromiumBrowser;
+use chromiumoxide::page::ScreenshotParams;
 use ammonia::clean;
+use anyhow::{Result, Error};
+use std::env;
+use futures::StreamExt;
+use serde_json::Value;
+use tokio::time::{sleep, Duration};
 
-/// A polite little web browser for our OSINT pipeline.
-/// Fetches pages and cleans out the nasties (scripts, styles, ads, etc.)
+/// Wrapper struct for a Chromium browser WebSocket connection.
 pub struct Browser {
-    client: Client,
+    inner: ChromiumBrowser,
 }
 
 impl Browser {
-    /// Create a new Browser with a sensible user-agent.
-    /// We don't want to be mistaken for a botty bot!
-    pub fn new() -> Self {
-        Browser {
-            client: Client::builder()
-                .user_agent("OSINT-Enricher-Bot/1.0 (+https://yourdomain.example)")
-                .build()
-                .expect("Failed to create HTTP client"),
+    /// Connect to a remote Chrome instance using the correct WebSocket URL,
+    /// with retry logic for container startup races and robust error handling.
+    ///
+    /// The base URL is read from the `CHROME_WS_URL` environment variable,
+    /// or defaults to "ws://chrome:9222" (Docker Compose service) if not set.
+    /// This method fetches the `/json/version` endpoint to get the true
+    /// WebSocket debugger endpoint and connects to that.
+    pub async fn new() -> Result<Self> {
+        // 1. Get the base (host:port) from env or default
+        let base = env::var("CHROME_WS_URL").unwrap_or_else(|_| "ws://chrome:9222".to_string());
+        println!("[browser.rs] Using base Chrome URL: {base}");
+
+        // 2. Convert ws://... to http://... for the version endpoint
+        let version_url = base
+            .replace("ws://", "http://")
+            .replace("wss://", "https://")
+            + "/json/version";
+        println!("[browser.rs] Using Chrome version endpoint: {version_url}");
+
+        // 3. Retry up to 30 times (60s) for Chrome to become ready and return a valid JSON response
+        let ws_url = {
+            let mut last_err = None;
+            let mut ws_url = None;
+            'retry: for attempt in 0..30 {
+                println!("[browser.rs] Attempt {}/30: Fetching Chrome /json/version ...", attempt + 1);
+                match reqwest::get(&version_url).await {
+                    Ok(resp) => match resp.text().await {
+                        Ok(text) => {
+                            println!("[browser.rs] Response from /json/version: '{}'", text);
+                            if let Ok(json) = serde_json::from_str::<Value>(&text) {
+                                if let Some(url) = json["webSocketDebuggerUrl"].as_str() {
+                                    println!("[browser.rs] Found webSocketDebuggerUrl: {}", url);
+                                    // --- Critical: rewrite localhost to Docker Compose service name ---
+                                    let docker_url = url.replace("ws://localhost:9222", "ws://chrome:9222");
+                                    ws_url = Some(docker_url);
+                                    break 'retry;
+                                } else {
+                                    println!("[browser.rs] No webSocketDebuggerUrl in JSON response");
+                                }
+                            } else {
+                                // Not valid JSON, likely Chrome not ready yet
+                                println!("[browser.rs] Got non-JSON response: '{}'", text);
+                                last_err = Some(Error::msg(format!("Got non-JSON response: '{}'", text)));
+                            }
+                        }
+                        Err(e) => {
+                            println!("[browser.rs] Error reading response text: {e}");
+                            last_err = Some(Error::msg(e));
+                        }
+                    },
+                    Err(e) => {
+                        println!("[browser.rs] Error making request to /json/version: {e}");
+                        last_err = Some(Error::msg(e));
+                    }
+                }
+                sleep(Duration::from_secs(2)).await;
+            }
+            ws_url.ok_or_else(|| Error::msg(format!(
+                "Could not fetch webSocketDebuggerUrl from Chrome after retries: {:?}",
+                last_err
+            )))?
+        };
+
+        println!("[browser.rs] Final WebSocket URL to connect: {}", ws_url);
+
+        // 4. Retry connecting to the remote browser at the true websocket endpoint
+        let mut last_connect_err = None;
+        for attempt in 0..30 {
+            println!("[browser.rs] Attempt {}/30: Connecting to Chromium at {}", attempt + 1, ws_url);
+            match ChromiumBrowser::connect(ws_url.clone()).await {
+                Ok((browser, mut handler)) => {
+                    println!("[browser.rs] Successfully connected to Chromium!");
+                    // Spawn the event handler as a background task to drive the browser's events.
+                    tokio::spawn(async move {
+                        while let Some(event) = handler.next().await {
+                            if let Err(e) = event {
+                                eprintln!("Chromium event handler error: {:?}", e);
+                            }
+                        }
+                    });
+                    return Ok(Self { inner: browser });
+                }
+                Err(e) => {
+                    println!("[browser.rs] Error connecting to Chromium: {e}");
+                    last_connect_err = Some(e);
+                    sleep(Duration::from_secs(2)).await;
+                }
+            }
         }
+
+        Err(Error::msg(format!(
+            "Could not connect to Chrome after retries: {:?}",
+            last_connect_err
+        )))
     }
 
-    /// Fetch the HTML content at the given URL, parse it,
-    /// extract the main text content, and sanitize it.
-    ///
-    /// # Arguments
-    ///
-    /// * `url` - The URL to fetch content from.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(String)` containing clean text content on success.
-    /// * `Err(reqwest::Error)` if the HTTP request or parsing fails.
-    ///
-    /// # Panics
-    ///
-    /// This function does not panic unless the selector parsing fails,
-    /// which should never happen with a hard-coded selector.
-    pub async fn fetch_and_clean(&self, url: &str) -> Result<String, reqwest::Error> {
-        // Fetch the page content over HTTP(S)
-        let resp = self.client.get(url).send().await?.text().await?;
+    /// Fetch and sanitize the content of a web page.
+    pub async fn fetch_and_clean(&self, url: &str) -> Result<String> {
+        // Open a new tab and navigate to the given URL.
+        let page = self.inner.new_page(url)
+            .await
+            .map_err(Error::msg)?;
 
-        // Parse the HTML document
-        let document = Html::parse_document(&resp);
+        // Wait for navigation to complete (the page is loaded).
+        page.wait_for_navigation()
+            .await
+            .map_err(Error::msg)?;
 
-        // Define selectors for main content areas — article, main, or fallback to body
-        // This is a simple heuristic; can be improved with readability algorithms
-        let selector = Selector::parse("article, main, body").expect("Selector parsing failed");
+        // Take a screenshot (optional, ensures page is rendered; can be removed if not needed).
+        let params = ScreenshotParams::builder().build();
+        let _ = page.screenshot(params).await.map_err(Error::msg)?;
 
-        // Collect text from selected elements
-        let mut content = String::new();
-        for element in document.select(&selector) {
-            // Join all text nodes inside the element with spaces
-            content.push_str(&element.text().collect::<Vec<_>>().join(" "));
-        }
+        // Get the full HTML content of the page.
+        let content = page.content().await.map_err(Error::msg)?;
 
-        // Sanitize the collected text to remove scripts, styles, and other nasties
-        let clean_content = clean(&content);
-
-        // Return the cleaned text content for safe consumption
-        Ok(clean_content)
+        // Sanitize the HTML to remove scripts, styles, and unsafe tags.
+        Ok(clean(&content))
     }
 }

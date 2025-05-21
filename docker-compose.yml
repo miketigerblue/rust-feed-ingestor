@@ -36,17 +36,31 @@ services:
     networks:
       - osint_net
 
+  chrome:
+    image: chromedp/headless-shell:latest
+    container_name: chrome
+    environment:
+      - PORT=9222
+    ports:
+      - "9222:9222"
+    shm_size: 2g
+    networks:
+      - osint_net
+
   rust_ingestor:
     build: .
     image: rust_feed_ingestor:latest
     container_name: rust_ingestor
     depends_on:
-      - db
+      db:
+        condition: service_started  
     environment:
       APP__DATABASE_URL: "postgres://user:pass@db:5432/osint?sslmode=disable"
       APP__INGEST_INTERVAL: "1m"
       APP__SERVER_BIND: "0.0.0.0:9100"
       RUST_LOG: "rust_feed_ingestor=info,sqlx=warn"
+      RUST_BACKTRACE: 1
+      CHROME_WS_URL: "ws://172.19.0.2:9222"
     ports:
       - "9100:9100"
     networks:
