@@ -33,7 +33,7 @@ url = "2.3"
 
 # Database access + migrations
 
-sqlx                = { version = "0.8.1", default-features = false, features = ["postgres", "runtime-tokio-native-tls", "macros", "chrono", "migrate"] }
+sqlx                = { version = "0.8.1", default-features = false, features = ["postgres", "runtime-tokio-native-tls", "macros", "chrono", "uuid", "migrate"] }
 
 # Duration parsing + Serde glue
 humantime           = "2.2.0"
@@ -69,6 +69,7 @@ anyhow              = "1.0"
 chrono              = { version = "0.4", features = ["serde"] }
 futures = "0.3.31"
 htmlescape = "0.3.1"
+uuid = { version = "1.17", features = ["v4", "serde"] }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dev-dependencies (for testing)

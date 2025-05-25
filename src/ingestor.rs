@@ -2,17 +2,20 @@
 use crate::errors::IngestError;
 use crate::metrics::{FETCH_COUNTER, FETCH_HISTOGRAM};
 use ammonia::clean;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use feed_rs::model::{Entry, Feed};
 use feed_rs::parser;
 use sqlx::PgPool;
 use std::time::Instant;
 use tracing::warn;
 use url::Url;
+use uuid::Uuid;
 
 /// Unified model: All entry and feed metadata for powerful OSINT queries.
 #[derive(Debug, Clone)]
 pub struct FeedItem {
+    // New: Canonical internal UUID (never from the source)
+    pub id: Uuid,
     // Entry fields
     pub guid: String,
     pub title: String,
@@ -30,6 +33,8 @@ pub struct FeedItem {
     pub feed_language: Option<String>,
     pub feed_icon: Option<String>,
     pub feed_updated: Option<NaiveDateTime>,
+    // New: Timestamp when ingestor created this FeedItem (UTC)
+    pub inserted_at: NaiveDateTime,
 }
 
 /// Convert an entry and its parent feed into a FeedItem with provenance.
@@ -53,6 +58,7 @@ pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedIte
     };
 
     FeedItem {
+        id: Uuid::new_v4(), // Internal UUID always generated on ingest
         guid: entry.id.clone(),
         title: entry
             .title
@@ -76,6 +82,7 @@ pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedIte
         feed_language: feed.language.clone(),
         feed_icon: feed.icon.as_ref().map(|i| i.uri.clone()), // FIXED: .uri not .href
         feed_updated: feed.updated.map(|dt| dt.naive_utc()),
+        inserted_at: Utc::now().naive_utc(), // Always record when this FeedItem was created
     }
 }
 
@@ -148,11 +155,12 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem) -> Result<(), IngestE
     if !exists.0 {
         sqlx::query(
             "INSERT INTO archive (
-                guid, title, link, published, content, summary, author, categories, entry_updated,
-                feed_url, feed_title, feed_description, feed_language, feed_icon, feed_updated
+                id, guid, title, link, published, content, summary, author, categories, entry_updated,
+                feed_url, feed_title, feed_description, feed_language, feed_icon, feed_updated, inserted_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
         )
+        .bind(&item.id)
         .bind(&item.guid)
         .bind(&item.title)
         .bind(&item.link)
@@ -168,16 +176,17 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem) -> Result<(), IngestE
         .bind(&item.feed_language)
         .bind(&item.feed_icon)
         .bind(item.feed_updated)
+        .bind(item.inserted_at)
         .execute(pool)
         .await?;
     }
     // Upsert into current
     sqlx::query(
         "INSERT INTO current (
-            guid, title, link, published, content, summary, author, categories, entry_updated,
-            feed_url, feed_title, feed_description, feed_language, feed_icon, feed_updated
+            id, guid, title, link, published, content, summary, author, categories, entry_updated,
+            feed_url, feed_title, feed_description, feed_language, feed_icon, feed_updated, inserted_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         ON CONFLICT (guid) DO UPDATE SET
             title = EXCLUDED.title,
             link = EXCLUDED.link,
@@ -192,8 +201,10 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem) -> Result<(), IngestE
             feed_description = EXCLUDED.feed_description,
             feed_language = EXCLUDED.feed_language,
             feed_icon = EXCLUDED.feed_icon,
-            feed_updated = EXCLUDED.feed_updated",
+            feed_updated = EXCLUDED.feed_updated,
+            inserted_at = EXCLUDED.inserted_at",
     )
+    .bind(&item.id)
     .bind(&item.guid)
     .bind(&item.title)
     .bind(&item.link)
@@ -209,6 +220,7 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem) -> Result<(), IngestE
     .bind(&item.feed_language)
     .bind(&item.feed_icon)
     .bind(item.feed_updated)
+    .bind(item.inserted_at)
     .execute(pool)
     .await?;
     Ok(())
