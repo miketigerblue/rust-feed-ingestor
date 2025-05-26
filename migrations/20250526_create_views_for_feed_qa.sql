@@ -136,3 +136,4 @@ CREATE INDEX IF NOT EXISTS idx_current_feed_url ON current(feed_url);
 CREATE INDEX IF NOT EXISTS idx_current_published ON current(published);
 
 -- End of migration file
+
