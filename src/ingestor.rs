@@ -1,14 +1,14 @@
 //! Core ingestion logic: fetch, parse, dedupe, sanitize, and upsert.
 
 use crate::errors::IngestError;
-use crate::metrics::{FETCH_COUNTER, FETCH_HISTOGRAM, ENTRIES_PROCESSED, SANITIZATION_FAILURES};
+use crate::metrics::{ENTRIES_PROCESSED, FETCH_COUNTER, FETCH_HISTOGRAM, SANITIZATION_FAILURES};
 use ammonia::clean;
 use chrono::{NaiveDateTime, Utc};
 use feed_rs::model::{Entry, Feed};
 use feed_rs::parser;
 use sqlx::PgPool;
 use std::time::Instant;
-use tracing::{warn, info, debug};
+use tracing::{debug, info, warn};
 use url::Url;
 use uuid::Uuid;
 
@@ -69,7 +69,11 @@ pub fn entry_to_feed_item(entry: &Entry, feed: &Feed, feed_url: &str) -> FeedIte
     if content.is_none() && summary.is_none() {
         warn!(
             "Feed entry for '{}' [{}] has neither content nor summary.",
-            entry.title.as_ref().map(|t| t.content.as_str()).unwrap_or("<no title>"),
+            entry
+                .title
+                .as_ref()
+                .map(|t| t.content.as_str())
+                .unwrap_or("<no title>"),
             link
         );
     }
@@ -189,7 +193,7 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem) -> Result<(), IngestE
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
         )
-        .bind(&item.id)
+        .bind(item.id)
         .bind(&item.guid)
         .bind(&item.title)
         .bind(&item.link)
@@ -235,7 +239,7 @@ pub async fn process_entry(pool: &PgPool, item: &FeedItem) -> Result<(), IngestE
             feed_updated = EXCLUDED.feed_updated,
             inserted_at = EXCLUDED.inserted_at",
     )
-    .bind(&item.id)
+    .bind(item.id)
     .bind(&item.guid)
     .bind(&item.title)
     .bind(&item.link)

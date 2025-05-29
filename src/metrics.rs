@@ -49,12 +49,11 @@ pub static ENTRIES_PROCESSED: Lazy<IntCounter> = Lazy::new(|| {
     c
 });
 
-
 // Track which content extraction branch is being used (for observability and tuning)
 pub static CONTENT_ENCODED_COUNT: Lazy<IntCounter> = Lazy::new(|| {
     let opts = Opts::new(
         "feed_content_encoded_entries_total",
-        "Entries populated using <content:encoded> RSS extension"
+        "Entries populated using <content:encoded> RSS extension",
     );
     let c = IntCounter::with_opts(opts).expect("counter opts");
     REGISTRY.register(Box::new(c.clone())).unwrap();
@@ -64,7 +63,7 @@ pub static CONTENT_ENCODED_COUNT: Lazy<IntCounter> = Lazy::new(|| {
 pub static CONTENT_FIELD_COUNT: Lazy<IntCounter> = Lazy::new(|| {
     let opts = Opts::new(
         "feed_content_field_entries_total",
-        "Entries populated using <content> field"
+        "Entries populated using <content> field",
     );
     let c = IntCounter::with_opts(opts).expect("counter opts");
     REGISTRY.register(Box::new(c.clone())).unwrap();
@@ -74,13 +73,12 @@ pub static CONTENT_FIELD_COUNT: Lazy<IntCounter> = Lazy::new(|| {
 pub static SUMMARY_FALLBACK_COUNT: Lazy<IntCounter> = Lazy::new(|| {
     let opts = Opts::new(
         "feed_summary_fallback_entries_total",
-        "Entries populated using <summary> field (fallback)"
+        "Entries populated using <summary> field (fallback)",
     );
     let c = IntCounter::with_opts(opts).expect("counter opts");
     REGISTRY.register(Box::new(c.clone())).unwrap();
     c
 });
-
 
 /// Encode all metrics as text
 pub fn gather_metrics() -> String {
