@@ -1,6 +1,6 @@
 # TigerBlue OSINT Dashboard – **Licence-Compliant Feed List**
 
-This documents the _public-demo_ feed set for TigerBlue.app after applying **Option B: “open-licence-only”**.  Every feed below is either U.S.-government public-domain, released under the UK Open Government Licence (OGL v3.0) or published under a permissive Creative Commons licence.  That means you can legally display _headline + short AI summary + link-back_ in a public dashboard with only minimal attribution.
+Every feed below is either U.S.-government public-domain, released under the UK Open Government Licence (OGL v3.0) or published under a permissive Creative Commons licence.  That means you can legally display _headline + short AI summary + link-back_ in a public dashboard with only minimal attribution.
 
 > **Important:** If you enable any additional feeds you _must_ verify the licence terms yourself before deploying them to the public instance.
 
