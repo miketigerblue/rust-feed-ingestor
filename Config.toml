@@ -1,125 +1,74 @@
-# ────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # Global settings
-# ────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 database_url    = "postgres://user:pass@db:5432/osint?sslmode=disable"
-ingest_interval = "1h"                     # human-readable (parsed by humantime_serde)
+ingest_interval = "1h"                     # human‑readable (parsed by humantime_serde)
 server_bind     = "0.0.0.0:9100"           # metrics & health HTTP endpoint
 
-# ───────────────────────────────────────────────────────────────────────────────
-# Feed sources
-# ───────────────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
+# Feed sources – *public‑demo safe list*
+#   These are the only feeds whose licences permit public redistribution.
+# ----------------------------------------------------------------------
 [[feeds]]
-name      = "CISA Cybersecurity Alerts (US-CERT)"
+name      = "CISA Cybersecurity Alerts"
 url       = "https://us-cert.cisa.gov/ncas/alerts.xml"
 feed_type = "official"
+licence   = "Public Domain (US Government)"
 tags      = ["threat-alerts", "vulnerabilities"]
 
 [[feeds]]
 name      = "CISA Vulnerability Advisories"
 url       = "https://www.cisa.gov/cybersecurity-advisories/all.xml"
 feed_type = "official"
+licence   = "Public Domain (US Government)"
 tags      = ["vulnerabilities", "patches"]
 
 [[feeds]]
 name      = "UK NCSC Updates"
 url       = "https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml"
 feed_type = "official"
+licence   = "Open Government Licence v3.0"
 tags      = ["advisories", "guidance"]
 
 [[feeds]]
 name      = "SANS Internet Storm Center Diaries"
 url       = "https://isc.sans.edu/rssfeed_full.xml"
 feed_type = "community"
+licence   = "Creative Commons BY-NC-SA 3.0 US"
 tags      = ["analysis", "daily-threat"]
 
 [[feeds]]
-name      = "Krebs on Security"
-url       = "https://krebsonsecurity.com/feed/"
-feed_type = "independent"
-tags      = ["investigations", "breaches"]
-
-
-[[feeds]]
-name      = "BleepingComputer"
-url       = "https://www.bleepingcomputer.com/feed/"
-feed_type = "independent"
-tags      = ["malware", "vulnerabilities"]
-
-[[feeds]]
-name      = "Dark Reading"
-url       = "https://www.darkreading.com/rss.xml"
-feed_type = "independent"
-tags      = ["industry-news", "analysis"]
-
-[[feeds]]
-name      = "Threatpost"
-url       = "https://threatpost.com/feed/"
-feed_type = "independent"
-tags      = ["vulnerabilities", "policy"]
-
-[[feeds]]
-name      = "The Hacker News"
-url       = "https://feeds.feedburner.com/TheHackersNews"
-feed_type = "independent"
-tags      = ["general-security", "updates"]
-
-[[feeds]]
-name      = "Schneier on Security"
-url       = "https://www.schneier.com/blog/atom.xml"
-feed_type = "independent"
-tags      = ["insights", "policy"]
-
-[[feeds]]
-name      = "Malwarebytes Labs"
-url       = "https://blog.malwarebytes.com/feed/"
-feed_type = "independent"
-tags      = ["malware-research", "threat-trends"]
-
-[[feeds]]
-name      = "Cisco Talos Intelligence Blog"
-url       = "https://feeds.feedburner.com/feedburner/Talos"
-feed_type = "independent"
-tags      = ["threat-intel", "IOCs"]
-
-[[feeds]]
-name      = "Securelist (Kaspersky GReAT)"
-url       = "https://securelist.com/feed/"
-feed_type = "independent"
-tags      = ["APTs", "reverse-engineering"]
-
-[[feeds]]
-name      = "Exploit-DB Latest Exploits"
-url       = "https://www.exploit-db.com/rss.xml"
-feed_type = "open-source"
-tags      = ["exploit-code", "PoC"]
-
-[[feeds]]
-name      = "CERT/CC Vulnerability Notes"
-url       = "https://www.kb.cert.org/vulfeed/"
-feed_type = "official"
-tags      = ["vulnerabilities", "multi-vendor"]
-
-[[feeds]]
-name      = "Microsoft Security Response Center (MSRC)"
-url       = "https://msrc-blog.microsoft.com/feed/"
-feed_type = "official"
-tags      = ["patches", "product-security"]
-
-[[feeds]]
-name      = "CERT-EU Security Advisories"
+name      = "CERT‑EU Security Advisories"
 url       = "https://cert.europa.eu/publications/threat-intelligence-rss"
 feed_type = "official"
+licence   = "Creative Commons BY 4.0"
 tags      = ["EU-advisories", "vulnerabilities"]
 
-[[feeds]]
-name      = "Reddit /r/netsec feed"
-url       = "https://www.reddit.com/r/netsec/.rss"
-feed_type = "Open Source (Community)"
-tags      = ["Reddit", "netsec"]
-
-
-[[feeds]]
-name      = "Palo Alto Networks Security Advisories"
-url       = "https://security.paloaltonetworks.com/rss.xml"
-feed_type = "Vendor"
-tags      = ["Palo Alto Networks", "Security Avisories"]
+# ----------------------------------------------------------------------
+# Optional – additional open‑licence feeds (commented out)
+# Uncomment only after verifying the licence remains permissive.
+#
+# [[feeds]]
+# name      = "CISA Known Exploited Vulnerabilities (KEV)"
+# url       = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.xml"
+# feed_type = "official"
+# licence   = "Public Domain (US Government)"
+# tags      = ["kev", "exploited-in-the-wild"]
+#
+# [[feeds]]
+# name      = "Australian ACSC Alerts"
+# url       = "https://www.cyber.gov.au/alerts/rss.xml"
+# feed_type = "official"
+# licence   = "Creative Commons BY 4.0 AU"
+# tags      = ["advisories", "au"]
+# ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# Licence‑compliance notes (informational)
+# ----------------------------------------------------------------------
+# • All feeds above are either public‑domain or published under a permissive
+#   Creative Commons / OGL licence that allows redistribution *with attribution*.
+# • The ingest pipeline must store only the original headline and a ≤100‑character
+#   AI‑generated summary in public caches.
+# • Any new feed added to this file must be reviewed for licence compatibility
+#   before deploying to the public demo.
+# ----------------------------------------------------------------------
